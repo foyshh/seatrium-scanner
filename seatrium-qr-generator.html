@@ -335,15 +335,25 @@ window._syncFromFirebase = function(data) {
 };
 
 function fbSaveMachine(m) {
-  if (!window._fbSet || !window._db) return;
+  if (!window._fbSet || !window._db) {
+    // Firebase not ready yet — retry after short delay
+    setTimeout(() => fbSaveMachine(m), 500);
+    return;
+  }
   const safeKey = m.id.replace(/[.#$[\]]/g, '_');
-  window._fbSet(window._fbRef(window._db, 'machines/' + safeKey), m);
+  window._fbSet(window._fbRef(window._db, 'machines/' + safeKey), m)
+    .then(() => console.log('Saved:', m.id))
+    .catch(e => { showToast('⚠ Firebase error: ' + e.message, true); console.error(e); });
 }
 
 function fbRemoveMachine(id) {
-  if (!window._fbRemove || !window._db) return;
+  if (!window._fbRemove || !window._db) {
+    setTimeout(() => fbRemoveMachine(id), 500);
+    return;
+  }
   const safeKey = id.replace(/[.#$[\]]/g, '_');
-  window._fbRemove(window._fbRef(window._db, 'machines/' + safeKey));
+  window._fbRemove(window._fbRef(window._db, 'machines/' + safeKey))
+    .catch(e => console.error('Remove error:', e));
 }
 
 function getBaseUrl() {
@@ -382,7 +392,8 @@ function addMachine(data) {
     loc: document.getElementById('in-loc').value.trim(),
     due: document.getElementById('in-due').value,
   };
-  if (!m.id||!m.name) { showToast('⚠ Enter Asset ID and Machine Name', true); return; }
+  if (!m.id) { showToast('⚠ Asset ID is required!', true); document.getElementById('in-id')?.focus(); return; }
+  if (!m.name) { showToast('⚠ Machine Name is required!', true); document.getElementById('in-name')?.focus(); return; }
   if (machines.find(x=>x.id===m.id)) { showToast('⚠ '+m.id+' already exists', true); return; }
   machines.push(m);
   fbSaveMachine(m);
@@ -390,6 +401,10 @@ function addMachine(data) {
   renderCard(m);
   document.getElementById('empty')?.remove();
   if (!data) {
+    document.getElementById('sync-label').textContent = 'Saving...';
+    setTimeout(() => {
+      document.getElementById('sync-label').textContent = 'Live sync ✓';
+    }, 1500);
     document.getElementById('in-id').value='';
     document.getElementById('in-name').value='';
     document.getElementById('in-loc').value='';
