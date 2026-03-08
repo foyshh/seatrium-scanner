@@ -225,13 +225,14 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
       <div class="form-group">
         <span class="form-label">Next Due Date</span>
         <div class="due-presets" id="add-presets">
-          <button type="button" class="due-preset" onclick="setDuePreset('in-due', 7, this)">7 days</button>
-          <button type="button" class="due-preset active" onclick="setDuePreset('in-due', 15, this)">15 days</button>
-          <button type="button" class="due-preset" onclick="setDuePreset('in-due', 30, this)">1 month</button>
+          <button type="button" class="due-preset" onclick="selectDue(7,this,'add-presets','in-due')">7 days</button>
+          <button type="button" class="due-preset active" onclick="selectDue(15,this,'add-presets','in-due')">15 days</button>
+          <button type="button" class="due-preset" onclick="selectDue(30,this,'add-presets','in-due')">1 month</button>
         </div>
-
+        <input type="hidden" id="in-due" value="" />
+        <span id="in-due-label" style="font-family:'Space Mono',monospace;font-size:10px;color:#1a6b3a;margin-top:4px;display:block;">📅 15 days from today</span>
       </div>
-      <button class="btn-add" onclick="addMachine()">+ Generate QR</button>
+      <button type="button" class="btn-add" onclick="addMachine()">+ Generate QR</button>
     </div>
   </div>
 
@@ -298,23 +299,28 @@ let firebaseReady = false;
 
 // Set default due date (15 days) on page load
 window.addEventListener('load', () => {
-  setDuePreset('in-due', 15, document.querySelector('#add-presets .due-preset:nth-child(2)'));
+  selectDue(15, null, 'add-presets', 'in-due');
 });
 
-function setDuePreset(inputId, days, btn) {
+function selectDue(days, btn, groupId, inputId) {
   const d = new Date();
   d.setDate(d.getDate() + days);
   const isoDate = d.toISOString().split('T')[0];
   const displayDate = d.toLocaleDateString('en-SG', {day:'2-digit', month:'short', year:'numeric'});
-  const el = document.getElementById(inputId);
-  el.value = isoDate;
-  el.placeholder = displayDate;
-  el.style.color = '#1a6b3a';
-  // Update active state
-  if (btn) {
-    const group = btn.closest('.due-presets');
-    group.querySelectorAll('.due-preset').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+  document.getElementById(inputId).value = isoDate;
+  const labelId = inputId + '-label';
+  const label = document.getElementById(labelId);
+  if (label) label.textContent = '📅 Due: ' + displayDate;
+  // Update active button
+  const group = document.getElementById(groupId);
+  if (group) group.querySelectorAll('.due-preset').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  else if (group) {
+    // Auto-select matching button
+    const btns = group.querySelectorAll('.due-preset');
+    if (days===7) btns[0]?.classList.add('active');
+    else if (days===15) btns[1]?.classList.add('active');
+    else btns[2]?.classList.add('active');
   }
 }
 
@@ -413,7 +419,7 @@ function addMachine(data) {
     document.getElementById('in-id').value='';
     document.getElementById('in-name').value='';
     document.getElementById('in-loc').value='';
-    setDuePreset('in-due', 15, document.querySelector('#add-presets .due-preset:nth-child(2)'));
+    selectDue(15, null, 'add-presets', 'in-due');
     document.getElementById('in-id').focus();
     showToast('✓ QR generated for '+m.id);
   }
@@ -502,7 +508,14 @@ function openEdit(id) {
   document.getElementById('edit-name').value = m.name;
   document.getElementById('edit-cat').value = m.cat;
   document.getElementById('edit-loc').value = m.loc || '';
-  document.getElementById('edit-due').value = m.due || '';
+  if (m.due) {
+    document.getElementById('edit-due').value = m.due;
+    const d = new Date(m.due);
+    const label = document.getElementById('edit-due-label');
+    if (label) label.textContent = '📅 Due: ' + d.toLocaleDateString('en-SG', {day:'2-digit',month:'short',year:'numeric'});
+  } else {
+    selectDue(15, null, 'edit-presets', 'edit-due');
+  }
   document.getElementById('edit-modal').classList.remove('hidden');
 }
 
