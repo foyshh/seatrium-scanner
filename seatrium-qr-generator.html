@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Seatrium — QR Generator</title>
+<title>iTEST PRO — QR Generator</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -182,7 +182,7 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
 </div>
 
 <div class="header">
-  <span class="logo"><span class="brand">Seatrium</span><span class="rest"> · QR Generator</span></span>
+  <span class="logo"><span class="brand">iTEST PRO</span><span class="rest"> · QR Generator</span></span>
   <div class="header-btns">
     <span class="sync-dot" id="sync-dot"></span>
     <span class="sync-label" id="sync-label">Not synced</span>
@@ -229,7 +229,7 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
           <button class="due-preset active" onclick="setDuePreset('in-due', 15, this)">15 days</button>
           <button class="due-preset" onclick="setDuePreset('in-due', 30, this)">1 month</button>
         </div>
-        <input type="date" class="form-input" id="in-due" style="margin-top:6px;" />
+
       </div>
       <button class="btn-add" onclick="addMachine()">+ Generate QR</button>
     </div>
@@ -283,7 +283,7 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
         <button class="due-preset active" onclick="setDuePreset('edit-due', 15, this)">15 days</button>
         <button class="due-preset" onclick="setDuePreset('edit-due', 30, this)">1 month</button>
       </div>
-      <input class="modal-input" id="edit-due" type="date" style="margin-top:6px;" />
+
     </div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeEdit()">Cancel</button>
