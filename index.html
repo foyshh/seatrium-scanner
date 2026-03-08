@@ -48,35 +48,55 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
 }
 .card-body { padding:18px; }
 
-.asset-banner {
-  background:linear-gradient(135deg,#1a6b3a,#2d9b5a);
-  border-radius:12px; padding:18px;
-  text-align:center; margin-bottom:18px;
-  animation:pop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+/* TABS */
+.tabs { display:flex; gap:8px; margin-bottom:16px; }
+.tab {
+  flex:1; padding:10px 8px; border-radius:8px; border:2px solid #e0e0e0;
+  font-family:'Space Mono',monospace; font-size:11px; font-weight:700;
+  cursor:pointer; background:#fafafa; color:#888; text-align:center; transition:all 0.2s;
 }
-@keyframes pop { from{transform:scale(0.9);opacity:0} to{transform:scale(1);opacity:1} }
-.asset-banner-label { font-family:'Space Mono',monospace; font-size:10px; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:6px; }
-.asset-banner-id { font-family:'Space Mono',monospace; font-size:26px; font-weight:700; color:#fff; display:block; }
-.asset-banner-sub { font-size:12px; color:rgba(255,255,255,0.7); margin-top:4px; }
+.tab.active { background:#1a6b3a; border-color:#1a6b3a; color:#fff; }
 
-.waiting-state { text-align:center; padding:24px 16px; }
-.waiting-icon { font-size:48px; margin-bottom:12px; display:block; }
+/* PHONE CAMERA MODE */
+.waiting-state { text-align:center; padding:20px 16px; }
+.waiting-icon { font-size:44px; margin-bottom:10px; display:block; }
 .waiting-text { font-family:'Space Mono',monospace; font-size:12px; color:#888; line-height:1.7; }
 .waiting-text strong { color:#1a6b3a; }
 
-.manual-row { display:flex; gap:8px; margin-top:14px; }
-.manual-input {
-  flex:1; padding:11px 13px; border:1.5px solid #e0e0e0; border-radius:8px;
-  font-family:'Space Mono',monospace; font-size:13px; font-weight:700;
-  color:#1a6b3a; outline:none; background:#f9fff9;
+.asset-banner {
+  background:linear-gradient(135deg,#1a6b3a,#2d9b5a);
+  border-radius:12px; padding:16px;
+  text-align:center; margin-bottom:16px;
+  animation:pop 0.4s cubic-bezier(0.34,1.56,0.64,1);
 }
-.manual-input:focus { border-color:#1a6b3a; background:#fff; }
-.manual-input::placeholder { color:#ccc; font-weight:400; font-size:12px; }
-.btn-manual {
-  padding:11px 16px; background:#1a6b3a; color:#fff; border:none;
-  border-radius:8px; font-family:'Space Mono',monospace; font-size:11px;
-  font-weight:700; cursor:pointer; white-space:nowrap;
+@keyframes pop { from{transform:scale(0.9);opacity:0} to{transform:scale(1);opacity:1} }
+.asset-banner-label { font-family:'Space Mono',monospace; font-size:10px; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:4px; }
+.asset-banner-id { font-family:'Space Mono',monospace; font-size:24px; font-weight:700; color:#fff; display:block; }
+.asset-banner-sub { font-size:11px; color:rgba(255,255,255,0.7); margin-top:3px; }
+
+/* HANDHELD MODE */
+.scan-input {
+  width:100%; padding:15px 18px;
+  border:2px solid #e0e0e0; border-radius:10px;
+  font-family:'Space Mono',monospace; font-size:18px;
+  font-weight:700; color:#1a6b3a; outline:none;
+  text-align:center; background:#f9fff9; margin-bottom:8px;
+  transition:all 0.2s;
 }
+.scan-input:focus { border-color:#1a6b3a; background:#fff; box-shadow:0 0 0 4px rgba(26,107,58,0.08); }
+.scan-input::placeholder { color:#ccc; font-size:13px; font-weight:400; }
+.scan-input.flash { animation:flash 0.4s ease; }
+@keyframes flash { 0%,100%{background:#fff} 50%{background:#d4f5e0} }
+.scan-hint { font-size:11px; color:#aaa; text-align:center; margin-bottom:14px; font-family:'Space Mono',monospace; }
+
+.scanned-badge {
+  background:#f0fdf4; border:2px solid #bbf7d0; border-radius:8px;
+  padding:10px 14px; margin-bottom:14px;
+  display:none; align-items:center; justify-content:space-between;
+}
+.scanned-badge.show { display:flex; }
+.scanned-id { font-family:'Space Mono',monospace; font-size:15px; font-weight:700; color:#1a6b3a; }
+.btn-clear { background:none; border:none; cursor:pointer; color:#999; font-size:16px; }
 
 .field-label {
   font-family:'Space Mono',monospace; font-size:10px;
@@ -187,26 +207,47 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
     <div class="card-header">📋 Inspection Form</div>
     <div class="card-body">
 
-      <div id="waiting-state" class="waiting-state">
-        <span class="waiting-icon">📷</span>
-        <div class="waiting-text">
-          <strong>Scan a QR code</strong> with your phone camera<br>
-          to auto-load the machine.<br><br>
-          Or type an Asset ID manually:
+      <!-- MODE TABS -->
+      <div class="tabs">
+        <div class="tab active" id="tab-phone" onclick="setMode('phone')">📱 Phone Camera</div>
+        <div class="tab" id="tab-hand" onclick="setMode('handheld')">🔫 Handheld Scanner</div>
+      </div>
+
+      <!-- PHONE CAMERA MODE -->
+      <div id="phone-section">
+        <div id="waiting-state" class="waiting-state">
+          <span class="waiting-icon">📷</span>
+          <div class="waiting-text">
+            <strong>Scan a QR code</strong> with your phone's<br>
+            default camera app — the machine<br>
+            will load here automatically.<br><br>
+            Or type an Asset ID manually:
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <input type="text" style="flex:1;padding:11px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:#1a6b3a;outline:none;background:#f9fff9;" id="manual-input" placeholder="e.g. EQP-0012" autocomplete="off" />
+            <button onclick="manualSet()" style="padding:11px 16px;background:#1a6b3a;color:#fff;border:none;border-radius:8px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;">GO</button>
+          </div>
         </div>
-        <div class="manual-row">
-          <input type="text" class="manual-input" id="manual-input" placeholder="e.g. EQP-0012" autocomplete="off" />
-          <button class="btn-manual" onclick="manualSet()">GO</button>
+
+        <div id="asset-banner" class="asset-banner" style="display:none">
+          <div class="asset-banner-label">✅ Machine Loaded</div>
+          <span class="asset-banner-id" id="banner-id">—</span>
+          <div class="asset-banner-sub">Fill in details below and submit</div>
+          <button onclick="clearAsset()" style="margin-top:10px;background:rgba(255,255,255,0.2);border:none;color:#fff;padding:5px 14px;border-radius:20px;font-family:'Space Mono',monospace;font-size:11px;cursor:pointer">✕ Scan different machine</button>
         </div>
       </div>
 
-      <div id="asset-banner" class="asset-banner" style="display:none">
-        <div class="asset-banner-label">✅ Machine Loaded</div>
-        <span class="asset-banner-id" id="banner-id">—</span>
-        <div class="asset-banner-sub">Fill in details below and submit</div>
-        <button onclick="clearAsset()" style="margin-top:10px;background:rgba(255,255,255,0.2);border:none;color:#fff;padding:5px 14px;border-radius:20px;font-family:'Space Mono',monospace;font-size:11px;cursor:pointer">✕ Scan different machine</button>
+      <!-- HANDHELD SCANNER MODE -->
+      <div id="hand-section" style="display:none">
+        <input type="text" class="scan-input" id="scan-input" placeholder="Waiting for scan..." autocomplete="off" />
+        <div class="scan-hint">Point handheld scanner at QR — auto-fills instantly</div>
+        <div class="scanned-badge" id="scanned-badge">
+          <span class="scanned-id" id="scanned-id-text">—</span>
+          <button class="btn-clear" onclick="clearHandheld()">✕</button>
+        </div>
       </div>
 
+      <!-- INSPECTOR -->
       <span class="field-label">Inspector</span>
       <select class="select" id="inspector">
         <option>Ahmad Rashid</option>
@@ -217,6 +258,7 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
         <option>Chen Xiao Hua</option>
       </select>
 
+      <!-- STATUS -->
       <span class="field-label">Status</span>
       <div class="status-row">
         <div class="s-btn pass" id="s-pass" onclick="setStatus('PASS')">✓ PASS</div>
@@ -224,6 +266,7 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
         <div class="s-btn" id="s-fail" onclick="setStatus('FAIL')">✗ FAIL</div>
       </div>
 
+      <!-- CHECKLIST -->
       <span class="field-label">Checklist</span>
       <div class="checklist">
         <div class="cl checked" onclick="tog(this)"><div class="cl-box">✓</div><span class="cl-text">Visual damage check</span></div>
@@ -241,6 +284,7 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
     </div>
   </div>
 
+  <!-- LOG -->
   <div class="card">
     <div class="card-body">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -250,7 +294,7 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
       <div class="log-list" id="log-list">
         <div class="log-item info">
           <div class="log-id">Ready</div>
-          <div class="log-meta">Scan a QR code with your camera to begin</div>
+          <div class="log-meta">Select a mode above to begin scanning</div>
         </div>
       </div>
     </div>
@@ -261,6 +305,8 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
 
 <script>
 let scriptUrl = '', currentStatus = 'PASS', currentAssetId = '', logCount = 0;
+let currentMode = 'phone';
+let scanBuffer = '', scanTimer = null;
 
 // Clock
 function tick() {
@@ -269,55 +315,96 @@ function tick() {
 }
 tick(); setInterval(tick, 1000);
 
-// ── READ ASSET ID FROM URL — always extract clean ID ──
+// ── MODE SWITCH ──
+function setMode(m) {
+  currentMode = m;
+  document.getElementById('tab-phone').className = 'tab'+(m==='phone'?' active':'');
+  document.getElementById('tab-hand').className  = 'tab'+(m==='handheld'?' active':'');
+  document.getElementById('phone-section').style.display = m==='phone'?'block':'none';
+  document.getElementById('hand-section').style.display  = m==='handheld'?'block':'none';
+  currentAssetId = '';
+  if (m==='handheld') setTimeout(()=>document.getElementById('scan-input').focus(), 100);
+}
+
+// ── CLEAN ID — strips full URL down to just the asset ID ──
+function cleanId(raw) {
+  let id = decodeURIComponent(String(raw)).trim().toUpperCase();
+  if (id.startsWith('HTTPS') || id.startsWith('HTTP')) {
+    try { id = new URL(raw.toLowerCase()).searchParams.get('id').toUpperCase(); } catch(e) {}
+  }
+  if (id.includes('?ID=')) id = id.split('?ID=').pop();
+  return id;
+}
+
+// ── PHONE CAMERA: auto-read ?id= from URL ──
 window.addEventListener('load', function() {
   const params = new URLSearchParams(window.location.search);
-  let id = params.get('id');
-  if (id) {
-    // Clean up — remove any URL prefix if accidentally included
-    id = id.trim().toUpperCase();
-    // Remove anything before ?id= if nested
-    if (id.includes('%3FID%3D')) id = decodeURIComponent(id).split('?id=').pop();
-    if (id.includes('?ID=')) id = id.split('?ID=').pop();
-    if (id.includes('?id=')) id = id.split('?id=').pop();
+  const raw = params.get('id');
+  if (raw) {
+    const id = cleanId(raw);
     setAsset(id);
     showToast('📷 Loaded: ' + id);
   }
 });
 
 function setAsset(id) {
-  // Always ensure we store only the clean asset ID — never a URL
-  if (id.startsWith('http')) {
-    try {
-      const url = new URL(id);
-      id = url.searchParams.get('id') || id;
-    } catch(e) {}
-  }
-  id = id.trim().toUpperCase();
   currentAssetId = id;
   document.getElementById('banner-id').textContent = id;
   document.getElementById('asset-banner').style.display = 'block';
   document.getElementById('waiting-state').style.display = 'none';
 }
-
 function clearAsset() {
   currentAssetId = '';
   document.getElementById('asset-banner').style.display = 'none';
   document.getElementById('waiting-state').style.display = 'block';
   window.history.replaceState({}, '', window.location.pathname);
 }
-
 function manualSet() {
   const val = document.getElementById('manual-input').value.trim().toUpperCase();
   if (!val) { showToast('⚠ Enter an Asset ID', true); return; }
-  setAsset(val);
+  setAsset(cleanId(val));
   document.getElementById('manual-input').value = '';
 }
-document.getElementById('manual-input').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') manualSet();
+document.getElementById('manual-input').addEventListener('keydown', e => { if(e.key==='Enter') manualSet(); });
+
+// ── HANDHELD: capture rapid keystrokes from scanner ──
+document.addEventListener('keydown', function(e) {
+  if (currentMode !== 'handheld') return;
+  if (['script-url','manual-input'].includes(document.activeElement?.id)) return;
+  if (document.activeElement?.tagName === 'SELECT') return;
+  if (e.key === 'Enter') {
+    const val = scanBuffer.trim() || document.getElementById('scan-input').value.trim();
+    if (val.length > 1) setHandheldId(val);
+    scanBuffer = '';
+    return;
+  }
+  if (e.key.length === 1) {
+    scanBuffer += e.key;
+    clearTimeout(scanTimer);
+    scanTimer = setTimeout(() => { scanBuffer = ''; }, 100);
+  }
+});
+document.getElementById('scan-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && this.value.trim()) setHandheldId(this.value.trim());
 });
 
-// Connect
+function setHandheldId(raw) {
+  const id = cleanId(raw);
+  currentAssetId = id;
+  document.getElementById('scan-input').value = id;
+  document.getElementById('scan-input').classList.add('flash');
+  setTimeout(() => document.getElementById('scan-input').classList.remove('flash'), 400);
+  document.getElementById('scanned-id-text').textContent = '✓ ' + id;
+  document.getElementById('scanned-badge').classList.add('show');
+  showToast('🔫 Scanned: ' + id);
+}
+function clearHandheld() {
+  currentAssetId = '';
+  document.getElementById('scan-input').value = '';
+  document.getElementById('scanned-badge').classList.remove('show');
+}
+
+// ── CONNECT ──
 function connect() {
   const url = document.getElementById('script-url').value.trim();
   if (!url.startsWith('https://script.google.com')) { showToast('⚠ Invalid URL', true); return; }
@@ -331,7 +418,7 @@ function connect() {
 const saved = localStorage.getItem('seatrum_url');
 if (saved) { scriptUrl=saved; document.getElementById('script-url').value=saved; connect(); }
 
-// Status & checklist
+// ── STATUS & CHECKLIST ──
 function setStatus(s) {
   currentStatus = s;
   document.getElementById('s-pass').className = 's-btn'+(s==='PASS'?' pass':'');
@@ -343,20 +430,10 @@ function tog(el) {
   el.querySelector('.cl-box').textContent = el.classList.contains('checked')?'✓':'';
 }
 
-// Submit — always sends clean assetId
+// ── SUBMIT ──
 async function submitScan() {
   if (!currentAssetId) { showToast('⚠ Scan a QR code first!', true); return; }
-
-  // Final safety clean — make absolutely sure it's not a URL
-  let cleanId = currentAssetId;
-  if (cleanId.startsWith('http')) {
-    try {
-      const url = new URL(cleanId);
-      cleanId = url.searchParams.get('id') || cleanId;
-    } catch(e) {}
-  }
-  cleanId = cleanId.trim().toUpperCase();
-
+  const id = cleanId(currentAssetId);
   const inspector = document.getElementById('inspector').value;
   const items = document.querySelectorAll('.cl');
   const checked = [...items].filter(i=>i.classList.contains('checked')).length;
@@ -373,37 +450,30 @@ async function submitScan() {
       await fetch(scriptUrl, {
         method:'POST', mode:'no-cors',
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-          assetId: cleanId,      // ← always clean ID, never a URL
-          machineName: '',
-          category: '',
-          date, time, inspector,
-          checklist:`${checked}/${items.length}`,
-          status: currentStatus
-        })
+        body: JSON.stringify({ assetId:id, machineName:'', category:'', date, time, inspector, checklist:`${checked}/${items.length}`, status:currentStatus })
       });
-      showToast('✓ '+cleanId+' saved to Sheets!');
-      addLog(currentStatus.toLowerCase(), cleanId, inspector+' · '+checked+'/'+items.length+' checks', time);
+      showToast('✓ '+id+' saved to Sheets!');
+      addLog(currentStatus.toLowerCase(), id, inspector+' · '+checked+'/'+items.length+' checks', time);
     } catch(e) { showToast('❌ Sync failed', true); }
   } else { showToast('⚠ Not connected!', true); }
 
   btn.disabled=false; btn.textContent='↑ SUBMIT TO GOOGLE SHEETS'; btn.classList.remove('syncing');
-  clearAsset();
+  if (currentMode==='phone') clearAsset(); else clearHandheld();
   document.querySelectorAll('.cl').forEach(el=>{ el.classList.add('checked'); el.querySelector('.cl-box').textContent='✓'; });
   setStatus('PASS');
+  if (currentMode==='handheld') setTimeout(()=>document.getElementById('scan-input').focus(), 100);
 }
 
-// Log
+// ── LOG ──
 function addLog(type,id,meta,time) {
   logCount++; document.getElementById('log-count').textContent=logCount;
   const el=document.createElement('div'); el.className='log-item '+type;
   const b=type!=='info'?`<span class="log-badge ${type}">${type.toUpperCase()}</span>`:'';
   el.innerHTML=`${b}<div class="log-id">${id}</div><div class="log-meta">${meta}</div><div class="log-time">${time}</div>`;
-  const list=document.getElementById('log-list');
-  list.insertBefore(el,list.firstChild);
+  document.getElementById('log-list').insertBefore(el, document.getElementById('log-list').firstChild);
 }
 
-// Toast
+// ── TOAST ──
 let tt;
 function showToast(msg,err=false) {
   const t=document.getElementById('toast');
