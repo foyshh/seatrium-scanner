@@ -426,8 +426,15 @@ function connect() {
   document.getElementById('setup-bar').classList.add('hidden');
   showToast('✓ Connected!');
 }
+// Restore saved URL on every page load — including when opened via QR scan
 const saved = localStorage.getItem('seatrum_url');
-if (saved) { scriptUrl=saved; document.getElementById('script-url').value=saved; connect(); }
+if (saved) {
+  scriptUrl = saved;
+  document.getElementById('script-url').value = saved;
+  document.getElementById('dot').className = 'dot on';
+  document.getElementById('conn-text').textContent = 'Connected to Google Sheets ✓';
+  document.getElementById('setup-bar').classList.add('hidden');
+}
 
 // ── STATUS & CHECKLIST ──
 function setStatus(s) {
