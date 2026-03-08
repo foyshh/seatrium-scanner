@@ -225,9 +225,9 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
       <div class="form-group">
         <span class="form-label">Next Due Date</span>
         <div class="due-presets" id="add-presets">
-          <button class="due-preset" onclick="setDuePreset('in-due', 7, this)">7 days</button>
-          <button class="due-preset active" onclick="setDuePreset('in-due', 15, this)">15 days</button>
-          <button class="due-preset" onclick="setDuePreset('in-due', 30, this)">1 month</button>
+          <button type="button" class="due-preset" onclick="setDuePreset('in-due', 7, this)">7 days</button>
+          <button type="button" class="due-preset active" onclick="setDuePreset('in-due', 15, this)">15 days</button>
+          <button type="button" class="due-preset" onclick="setDuePreset('in-due', 30, this)">1 month</button>
         </div>
 
       </div>
@@ -279,9 +279,9 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
     <div class="modal-field">
       <span class="modal-label">Next Due Date</span>
       <div class="due-presets" id="edit-presets">
-        <button class="due-preset" onclick="setDuePreset('edit-due', 7, this)">7 days</button>
-        <button class="due-preset active" onclick="setDuePreset('edit-due', 15, this)">15 days</button>
-        <button class="due-preset" onclick="setDuePreset('edit-due', 30, this)">1 month</button>
+        <button type="button" class="due-preset" onclick="setDuePreset('edit-due', 7, this)">7 days</button>
+        <button type="button" class="due-preset active" onclick="setDuePreset('edit-due', 15, this)">15 days</button>
+        <button type="button" class="due-preset" onclick="setDuePreset('edit-due', 30, this)">1 month</button>
       </div>
 
     </div>
@@ -304,7 +304,12 @@ window.addEventListener('load', () => {
 function setDuePreset(inputId, days, btn) {
   const d = new Date();
   d.setDate(d.getDate() + days);
-  document.getElementById(inputId).value = d.toISOString().split('T')[0];
+  const isoDate = d.toISOString().split('T')[0];
+  const displayDate = d.toLocaleDateString('en-SG', {day:'2-digit', month:'short', year:'numeric'});
+  const el = document.getElementById(inputId);
+  el.value = isoDate;
+  el.placeholder = displayDate;
+  el.style.color = '#1a6b3a';
   // Update active state
   if (btn) {
     const group = btn.closest('.due-presets');
