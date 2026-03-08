@@ -3,7 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Seatrum Scanner</title>
+<title>Seatrium Scanner</title>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  // ── PASTE YOUR FIREBASE CONFIG HERE ──
+  const firebaseConfig = {
+    apiKey: "AIzaSyAfRk68ULes8efF9XmGH-jmMQAwTCdG084",
+    authDomain: "seatrium-scanner.firebaseapp.com",
+    databaseURL: "https://seatrium-scanner-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "seatrium-scanner",
+    storageBucket: "seatrium-scanner.firebasestorage.app",
+    messagingSenderId: "45354259398",
+    appId: "1:45354259398:web:17781f783475a4067498c7",
+    measurementId: "G-FZMM1W8L4Q"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const machinesRef = ref(db, 'machines');
+  onValue(machinesRef, (snapshot) => {
+    window._machines = snapshot.val() ? Object.values(snapshot.val()) : [];
+    window._fbReady = true;
+  });
+</script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -13,8 +35,9 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
   background:#1a6b3a; padding:14px 20px;
   display:flex; align-items:center; justify-content:space-between;
 }
-.logo { font-family:'Space Mono',monospace; font-size:15px; font-weight:700; color:#fff; letter-spacing:0.1em; }
-.logo span { opacity:0.5; }
+.logo { font-family:'Space Mono',monospace; font-size:18px; font-weight:700; letter-spacing:0.1em; }
+.logo .brand { color:#4fa3ff; }
+.logo .rest { color:rgba(255,255,255,0.5); font-size:14px; }
 .clock { font-family:'Space Mono',monospace; font-size:11px; color:rgba(255,255,255,0.6); }
 
 .setup-bar {
@@ -24,40 +47,20 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
 .setup-bar.hidden { display:none; }
 .setup-group { display:flex; flex-direction:column; gap:4px; flex:1; min-width:200px; }
 .setup-label { font-family:'Space Mono',monospace; font-size:10px; color:#7a5c00; text-transform:uppercase; }
-.setup-input {
-  padding:9px 12px; border:1.5px solid #ddd; border-radius:6px;
-  font-family:'Space Mono',monospace; font-size:11px; outline:none; width:100%;
-}
+.setup-input { padding:9px 12px; border:1.5px solid #ddd; border-radius:6px; font-family:'Space Mono',monospace; font-size:11px; outline:none; width:100%; }
 .setup-input:focus { border-color:#1a6b3a; }
-.btn-connect {
-  padding:10px 20px; background:#1a6b3a; color:#fff; border:none;
-  border-radius:6px; font-family:'Space Mono',monospace; font-size:11px;
-  font-weight:700; cursor:pointer; white-space:nowrap;
-}
+.btn-connect { padding:10px 20px; background:#1a6b3a; color:#fff; border:none; border-radius:6px; font-family:'Space Mono',monospace; font-size:11px; font-weight:700; cursor:pointer; white-space:nowrap; }
 
 .main { padding:16px; max-width:480px; margin:0 auto; }
 
-.card {
-  background:#fff; border-radius:14px;
-  box-shadow:0 2px 16px rgba(0,0,0,0.08); overflow:hidden; margin-bottom:16px;
-}
-.card-header {
-  background:#1a6b3a; padding:13px 18px;
-  font-family:'Space Mono',monospace; font-size:11px;
-  color:#fff; letter-spacing:0.08em; text-transform:uppercase;
-}
+.card { background:#fff; border-radius:14px; box-shadow:0 2px 16px rgba(0,0,0,0.08); overflow:hidden; margin-bottom:16px; }
+.card-header { background:#1a6b3a; padding:13px 18px; font-family:'Space Mono',monospace; font-size:11px; color:#fff; letter-spacing:0.08em; text-transform:uppercase; }
 .card-body { padding:18px; }
 
-/* TABS */
 .tabs { display:flex; gap:8px; margin-bottom:16px; }
-.tab {
-  flex:1; padding:10px 8px; border-radius:8px; border:2px solid #e0e0e0;
-  font-family:'Space Mono',monospace; font-size:11px; font-weight:700;
-  cursor:pointer; background:#fafafa; color:#888; text-align:center; transition:all 0.2s;
-}
+.tab { flex:1; padding:10px 8px; border-radius:8px; border:2px solid #e0e0e0; font-family:'Space Mono',monospace; font-size:11px; font-weight:700; cursor:pointer; background:#fafafa; color:#888; text-align:center; transition:all 0.2s; }
 .tab.active { background:#1a6b3a; border-color:#1a6b3a; color:#fff; }
 
-/* PHONE CAMERA MODE */
 .waiting-state { text-align:center; padding:20px 16px; }
 .waiting-icon { font-size:44px; margin-bottom:10px; display:block; }
 .waiting-text { font-family:'Space Mono',monospace; font-size:12px; color:#888; line-height:1.7; }
@@ -65,99 +68,64 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
 
 .asset-banner {
   background:linear-gradient(135deg,#1a6b3a,#2d9b5a);
-  border-radius:12px; padding:16px;
-  text-align:center; margin-bottom:16px;
+  border-radius:12px; padding:16px; text-align:center; margin-bottom:16px;
   animation:pop 0.4s cubic-bezier(0.34,1.56,0.64,1);
 }
 @keyframes pop { from{transform:scale(0.9);opacity:0} to{transform:scale(1);opacity:1} }
 .asset-banner-label { font-family:'Space Mono',monospace; font-size:10px; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:4px; }
 .asset-banner-id { font-family:'Space Mono',monospace; font-size:24px; font-weight:700; color:#fff; display:block; }
-.asset-banner-sub { font-size:11px; color:rgba(255,255,255,0.7); margin-top:3px; }
+.asset-banner-name { font-size:13px; color:rgba(255,255,255,0.85); margin-top:4px; display:block; }
+.asset-banner-sub { font-size:11px; color:rgba(255,255,255,0.6); margin-top:2px; }
 
-/* HANDHELD MODE */
-.scan-input {
-  width:100%; padding:15px 18px;
-  border:2px solid #e0e0e0; border-radius:10px;
-  font-family:'Space Mono',monospace; font-size:18px;
-  font-weight:700; color:#1a6b3a; outline:none;
-  text-align:center; background:#f9fff9; margin-bottom:8px;
-  transition:all 0.2s;
-}
+.due-banner { border-radius:9px; padding:10px 14px; margin-bottom:14px; font-family:'Space Mono',monospace; font-size:12px; font-weight:700; display:none; align-items:center; gap:8px; }
+.due-banner.show { display:flex; }
+.due-banner.ok { background:#f0fdf4; border:1.5px solid #86efac; color:#166534; }
+.due-banner.soon { background:#fffbeb; border:1.5px solid #fcd34d; color:#92400e; }
+.due-banner.overdue { background:#fef2f2; border:1.5px solid #fca5a5; color:#991b1b; }
+.due-icon { font-size:18px; }
+
+.scan-input { width:100%; padding:15px 18px; border:2px solid #e0e0e0; border-radius:10px; font-family:'Space Mono',monospace; font-size:18px; font-weight:700; color:#1a6b3a; outline:none; text-align:center; background:#f9fff9; margin-bottom:8px; transition:all 0.2s; }
 .scan-input:focus { border-color:#1a6b3a; background:#fff; box-shadow:0 0 0 4px rgba(26,107,58,0.08); }
 .scan-input::placeholder { color:#ccc; font-size:13px; font-weight:400; }
 .scan-input.flash { animation:flash 0.4s ease; }
 @keyframes flash { 0%,100%{background:#fff} 50%{background:#d4f5e0} }
 .scan-hint { font-size:11px; color:#aaa; text-align:center; margin-bottom:14px; font-family:'Space Mono',monospace; }
 
-.scanned-badge {
-  background:#f0fdf4; border:2px solid #bbf7d0; border-radius:8px;
-  padding:10px 14px; margin-bottom:14px;
-  display:none; align-items:center; justify-content:space-between;
-}
+.scanned-badge { background:#f0fdf4; border:2px solid #bbf7d0; border-radius:8px; padding:10px 14px; margin-bottom:14px; display:none; align-items:center; justify-content:space-between; }
 .scanned-badge.show { display:flex; }
 .scanned-id { font-family:'Space Mono',monospace; font-size:15px; font-weight:700; color:#1a6b3a; }
 .btn-clear { background:none; border:none; cursor:pointer; color:#999; font-size:16px; }
 
-.field-label {
-  font-family:'Space Mono',monospace; font-size:10px;
-  text-transform:uppercase; letter-spacing:0.1em; color:#888;
-  margin-bottom:5px; display:block;
-}
-.select {
-  width:100%; padding:10px 13px; border:1.5px solid #e0e0e0; border-radius:8px;
-  font-size:14px; color:#1a1814; background:#fafafa; outline:none;
-  cursor:pointer; margin-bottom:14px;
-}
+.field-label { font-family:'Space Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:#888; margin-bottom:5px; display:block; }
+.select { width:100%; padding:10px 13px; border:1.5px solid #e0e0e0; border-radius:8px; font-size:14px; color:#1a1814; background:#fafafa; outline:none; cursor:pointer; margin-bottom:14px; }
 .select:focus { border-color:#1a6b3a; }
 
 .status-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:16px; }
-.s-btn {
-  padding:11px 6px; border-radius:8px; border:2px solid #e0e0e0;
-  font-family:'Space Mono',monospace; font-size:11px; font-weight:700;
-  cursor:pointer; background:#fafafa; text-align:center; transition:all 0.15s;
-}
+.s-btn { padding:11px 6px; border-radius:8px; border:2px solid #e0e0e0; font-family:'Space Mono',monospace; font-size:11px; font-weight:700; cursor:pointer; background:#fafafa; text-align:center; transition:all 0.15s; }
 .s-btn.pass { background:#d4f5e0; border-color:#1a6b3a; color:#1a6b3a; }
 .s-btn.flag { background:#fff3cd; border-color:#f59e0b; color:#92400e; }
 .s-btn.fail { background:#fee2e2; border-color:#ef4444; color:#991b1b; }
 
 .checklist { display:flex; flex-direction:column; gap:7px; margin-bottom:16px; }
-.cl {
-  display:flex; align-items:center; gap:10px; padding:10px 12px;
-  background:#f9f9f9; border:1.5px solid #ececec; border-radius:8px; cursor:pointer;
-}
+.cl { display:flex; align-items:center; gap:10px; padding:10px 12px; background:#f9f9f9; border:1.5px solid #ececec; border-radius:8px; cursor:pointer; }
 .cl.checked { background:#f0fdf4; border-color:#bbf7d0; }
-.cl-box {
-  width:20px; height:20px; border-radius:5px; border:2px solid #ccc;
-  display:flex; align-items:center; justify-content:center;
-  flex-shrink:0; font-size:12px; transition:all 0.15s;
-}
+.cl-box { width:20px; height:20px; border-radius:5px; border:2px solid #ccc; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:12px; transition:all 0.15s; }
 .cl.checked .cl-box { background:#1a6b3a; border-color:#1a6b3a; color:#fff; }
 .cl-text { font-size:13px; color:#333; }
 .cl.checked .cl-text { color:#aaa; text-decoration:line-through; }
 
-.btn-submit {
-  width:100%; padding:15px; background:#1a6b3a; color:#fff; border:none;
-  border-radius:11px; font-family:'Space Mono',monospace; font-size:13px;
-  font-weight:700; cursor:pointer; transition:all 0.2s;
-}
+.btn-submit { width:100%; padding:15px; background:#1a6b3a; color:#fff; border:none; border-radius:11px; font-family:'Space Mono',monospace; font-size:13px; font-weight:700; cursor:pointer; transition:all 0.2s; }
 .btn-submit:active { transform:scale(0.98); }
 .btn-submit:disabled { background:#ccc; }
 .btn-submit.syncing { background:#2563eb; }
 
-.conn {
-  display:flex; align-items:center; gap:7px; padding:9px 18px;
-  background:#f0fdf4; border-top:1px solid #dcfce7;
-  font-family:'Space Mono',monospace; font-size:10px; color:#666;
-}
+.conn { display:flex; align-items:center; gap:7px; padding:9px 18px; background:#f0fdf4; border-top:1px solid #dcfce7; font-family:'Space Mono',monospace; font-size:10px; color:#666; }
 .dot { width:8px; height:8px; border-radius:50%; background:#ccc; flex-shrink:0; }
 .dot.on { background:#22c55e; animation:pg 2s infinite; }
 @keyframes pg { 0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.5)} 50%{box-shadow:0 0 0 6px rgba(34,197,94,0)} }
 
 .log-list { max-height:260px; overflow-y:auto; }
-.log-item {
-  padding:10px 12px; border-radius:8px; margin-bottom:8px;
-  border-left:3px solid #ccc; background:#fafafa; animation:li 0.3s ease;
-}
+.log-item { padding:10px 12px; border-radius:8px; margin-bottom:8px; border-left:3px solid #ccc; background:#fafafa; animation:li 0.3s ease; }
 @keyframes li { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:none} }
 .log-item.pass { border-color:#1a6b3a; background:#f0fdf4; }
 .log-item.flag { border-color:#f59e0b; background:#fffbeb; }
@@ -172,35 +140,15 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
 .log-badge.fail { background:#fee2e2; color:#991b1b; }
 .log-count { font-family:'Space Mono',monospace; font-size:11px; background:#1a6b3a; color:#fff; padding:2px 10px; border-radius:10px; }
 
-.toast {
-  position:fixed; bottom:28px; left:50%;
-  transform:translateX(-50%) translateY(70px);
-  background:#1a6b3a; color:#fff; padding:13px 24px; border-radius:30px;
-  font-family:'Space Mono',monospace; font-size:12px; opacity:0;
-  transition:all 0.35s cubic-bezier(0.34,1.56,0.64,1);
-  box-shadow:0 4px 24px rgba(0,0,0,0.25); z-index:999;
-  max-width:90vw; text-align:center;
-}
+.toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(70px); background:#1a6b3a; color:#fff; padding:13px 24px; border-radius:30px; font-family:'Space Mono',monospace; font-size:12px; opacity:0; transition:all 0.35s cubic-bezier(0.34,1.56,0.64,1); box-shadow:0 4px 24px rgba(0,0,0,0.25); z-index:999; max-width:90vw; text-align:center; }
 .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
 .toast.err { background:#dc2626; }
-
-/* DUE DATE BANNER */
-.due-banner {
-  border-radius:9px; padding:10px 14px; margin-bottom:14px;
-  font-family:'Space Mono',monospace; font-size:12px; font-weight:700;
-  display:none; align-items:center; gap:8px;
-}
-.due-banner.show { display:flex; }
-.due-banner.ok { background:#f0fdf4; border:1.5px solid #86efac; color:#166534; }
-.due-banner.soon { background:#fffbeb; border:1.5px solid #fcd34d; color:#92400e; }
-.due-banner.overdue { background:#fef2f2; border:1.5px solid #fca5a5; color:#991b1b; }
-.due-icon { font-size:18px; }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <span class="logo">SEAT<span>RUM</span> · Scanner</span>
+  <span class="logo"><span class="brand">Seatrium</span><span class="rest"> · Scanner</span></span>
   <span class="clock" id="clock"></span>
 </div>
 
@@ -219,13 +167,12 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
     <div class="card-header">📋 Inspection Form</div>
     <div class="card-body">
 
-      <!-- MODE TABS -->
       <div class="tabs">
         <div class="tab active" id="tab-phone" onclick="setMode('phone')">📱 Phone Camera</div>
         <div class="tab" id="tab-hand" onclick="setMode('handheld')">🔫 Handheld Scanner</div>
       </div>
 
-      <!-- PHONE CAMERA MODE -->
+      <!-- PHONE MODE -->
       <div id="phone-section">
         <div id="waiting-state" class="waiting-state">
           <span class="waiting-icon">📷</span>
@@ -240,10 +187,10 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
             <button onclick="manualSet()" style="padding:11px 16px;background:#1a6b3a;color:#fff;border:none;border-radius:8px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;">GO</button>
           </div>
         </div>
-
         <div id="asset-banner" class="asset-banner" style="display:none">
           <div class="asset-banner-label">✅ Machine Loaded</div>
           <span class="asset-banner-id" id="banner-id">—</span>
+          <span class="asset-banner-name" id="banner-name"></span>
           <div class="asset-banner-sub">Fill in details below and submit</div>
           <button onclick="clearAsset()" style="margin-top:10px;background:rgba(255,255,255,0.2);border:none;color:#fff;padding:5px 14px;border-radius:20px;font-family:'Space Mono',monospace;font-size:11px;cursor:pointer">✕ Scan different machine</button>
         </div>
@@ -253,7 +200,7 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
         </div>
       </div>
 
-      <!-- HANDHELD SCANNER MODE -->
+      <!-- HANDHELD MODE -->
       <div id="hand-section" style="display:none">
         <input type="text" class="scan-input" id="scan-input" placeholder="Waiting for scan..." autocomplete="off" />
         <div class="scan-hint">Point handheld scanner at QR — auto-fills instantly</div>
@@ -261,13 +208,25 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
           <span class="scanned-id" id="scanned-id-text">—</span>
           <button class="btn-clear" onclick="clearHandheld()">✕</button>
         </div>
+        <div class="due-banner" id="due-banner-hand">
+          <span class="due-icon" id="due-icon-hand">📅</span>
+          <span id="due-text-hand">—</span>
+        </div>
       </div>
 
       <!-- INSPECTOR -->
       <span class="field-label">Inspector</span>
       <select class="select" id="inspector">
-        <option>Romjan</option>
-        <option>Foyshal</option>
+        <option>Inspector 1</option>
+        <option>Inspector 2</option>
+        <option>Inspector 3</option>
+        <option>Inspector 4</option>
+        <option>Inspector 5</option>
+        <option>Inspector 6</option>
+        <option>Inspector 7</option>
+        <option>Inspector 8</option>
+        <option>Inspector 9</option>
+        <option>Inspector 10</option>
       </select>
 
       <!-- STATUS -->
@@ -286,7 +245,6 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
         <div class="cl checked" onclick="tog(this)"><div class="cl-box">✓</div><span class="cl-text">Torch Regulator</span></div>
         <div class="cl checked" onclick="tog(this)"><div class="cl-box">✓</div><span class="cl-text">Cutting Torch Condition</span></div>
         <div class="cl checked" onclick="tog(this)"><div class="cl-box">✓</div><span class="cl-text">Labels & tags legible</span></div>
-        
       </div>
 
       <button class="btn-submit" id="btn-submit" onclick="submitScan()">↑ SUBMIT TO GOOGLE SHEETS</button>
@@ -297,7 +255,6 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
     </div>
   </div>
 
-  <!-- LOG -->
   <div class="card">
     <div class="card-body">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -305,10 +262,7 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
         <span class="log-count" id="log-count">0</span>
       </div>
       <div class="log-list" id="log-list">
-        <div class="log-item info">
-          <div class="log-id">Ready</div>
-          <div class="log-meta">Select a mode above to begin scanning</div>
-        </div>
+        <div class="log-item info"><div class="log-id">Ready</div><div class="log-meta">Select a mode above to begin scanning</div></div>
       </div>
     </div>
   </div>
@@ -317,241 +271,188 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
 <div class="toast" id="toast"></div>
 
 <script>
-let scriptUrl = '', currentStatus = 'PASS', currentAssetId = '', logCount = 0;
-let currentMode = 'phone';
-let scanBuffer = '', scanTimer = null;
+let scriptUrl='', currentStatus='PASS', currentAssetId='', logCount=0;
+let currentMode='phone';
+let scanBuffer='', scanTimer=null;
+window._machines = [];
+window._fbReady = false;
 
-// Clock
 function tick() {
   document.getElementById('clock').textContent =
     new Date().toLocaleTimeString('en-SG',{timeZone:'Asia/Singapore',hour12:false})+' SGT';
 }
-tick(); setInterval(tick, 1000);
+tick(); setInterval(tick,1000);
 
-// ── MODE SWITCH ──
 function setMode(m) {
-  currentMode = m;
-  document.getElementById('tab-phone').className = 'tab'+(m==='phone'?' active':'');
-  document.getElementById('tab-hand').className  = 'tab'+(m==='handheld'?' active':'');
-  document.getElementById('phone-section').style.display = m==='phone'?'block':'none';
-  document.getElementById('hand-section').style.display  = m==='handheld'?'block':'none';
-  currentAssetId = '';
-  if (m==='handheld') setTimeout(()=>document.getElementById('scan-input').focus(), 100);
+  currentMode=m;
+  document.getElementById('tab-phone').className='tab'+(m==='phone'?' active':'');
+  document.getElementById('tab-hand').className='tab'+(m==='handheld'?' active':'');
+  document.getElementById('phone-section').style.display=m==='phone'?'block':'none';
+  document.getElementById('hand-section').style.display=m==='handheld'?'block':'none';
+  currentAssetId='';
+  if (m==='handheld') setTimeout(()=>document.getElementById('scan-input').focus(),100);
 }
 
-// ── CLEAN ID — strips full URL down to just the asset ID ──
 function cleanId(raw) {
-  let id = decodeURIComponent(String(raw)).trim().toUpperCase();
-  if (id.startsWith('HTTPS') || id.startsWith('HTTP')) {
-    try { id = new URL(raw.toLowerCase()).searchParams.get('id').toUpperCase(); } catch(e) {}
+  let id=decodeURIComponent(String(raw)).trim().toUpperCase();
+  if (id.startsWith('HTTPS')||id.startsWith('HTTP')) {
+    try { id=new URL(raw.toLowerCase()).searchParams.get('id').toUpperCase(); } catch(e) {}
   }
-  if (id.includes('?ID=')) id = id.split('?ID=').pop();
+  if (id.includes('?ID=')) id=id.split('?ID=').pop();
   return id;
 }
 
-// ── PHONE CAMERA: auto-read ?id= from URL ──
-window.addEventListener('load', function() {
-  const params = new URLSearchParams(window.location.search);
-  const raw = params.get('id');
-  if (raw) {
-    const id = cleanId(raw);
-    setAsset(id);
-    showToast('📷 Loaded: ' + id);
-  }
+function getMachineData(id) {
+  if (!window._machines) return null;
+  return window._machines.find(m => m.id === id) || null;
+}
+
+window.addEventListener('load',function() {
+  const params=new URLSearchParams(window.location.search);
+  const raw=params.get('id');
+  if (raw) { const id=cleanId(raw); setAsset(id); showToast('📷 Loaded: '+id); }
 });
 
 function setAsset(id) {
-  currentAssetId = id;
-  document.getElementById('banner-id').textContent = id;
-  document.getElementById('asset-banner').style.display = 'block';
-  document.getElementById('waiting-state').style.display = 'none';
-  // Show due date countdown if machine data exists
-  showDueDate(id);
+  currentAssetId=id;
+  document.getElementById('banner-id').textContent=id;
+  // Show machine name if available from Firebase
+  const m = getMachineData(id);
+  document.getElementById('banner-name').textContent = m ? m.name+' · 📍'+m.loc : '';
+  document.getElementById('asset-banner').style.display='block';
+  document.getElementById('waiting-state').style.display='none';
+  showDueDate(id,'due-banner','due-icon','due-text');
 }
 
-function showDueDate(id) {
-  const banner = document.getElementById('due-banner');
-  try {
-    const saved = localStorage.getItem('seatrum_machines');
-    if (!saved) { banner.className='due-banner'; return; }
-    const machines = JSON.parse(saved);
-    const m = machines.find(x => x.id === id);
-    if (!m || !m.due) { banner.className='due-banner'; return; }
-    const today = new Date(); today.setHours(0,0,0,0);
-    const d = new Date(m.due); d.setHours(0,0,0,0);
-    const diff = Math.round((d - today) / (1000*60*60*24));
-    const icon = document.getElementById('due-icon');
-    const text = document.getElementById('due-text');
-    if (diff < 0) {
-      banner.className='due-banner show overdue';
-      icon.textContent='🚨';
-      text.textContent='Overdue by '+Math.abs(diff)+' day'+(Math.abs(diff)!==1?'s':'')+'!';
-    } else if (diff === 0) {
-      banner.className='due-banner show overdue';
-      icon.textContent='⚠️';
-      text.textContent='Inspection due TODAY!';
-    } else if (diff <= 7) {
-      banner.className='due-banner show soon';
-      icon.textContent='⏰';
-      text.textContent='Due in '+diff+' day'+(diff!==1?'s':'')+' — '+m.due;
-    } else {
-      banner.className='due-banner show ok';
-      icon.textContent='📅';
-      text.textContent='Next due: '+m.due+' ('+diff+' days)';
-    }
-  } catch(e) { banner.className='due-banner'; }
+function showDueDate(id, bannerId, iconId, textId) {
+  const banner=document.getElementById(bannerId);
+  const m = getMachineData(id);
+  if (!m||!m.due) { banner.className='due-banner'; return; }
+  const today=new Date(); today.setHours(0,0,0,0);
+  const d=new Date(m.due); d.setHours(0,0,0,0);
+  const diff=Math.round((d-today)/(1000*60*60*24));
+  const icon=document.getElementById(iconId);
+  const text=document.getElementById(textId);
+  if (diff<0) { banner.className='due-banner show overdue'; icon.textContent='🚨'; text.textContent='Overdue by '+Math.abs(diff)+' day'+(Math.abs(diff)!==1?'s':'')+'!'; }
+  else if (diff===0) { banner.className='due-banner show overdue'; icon.textContent='⚠️'; text.textContent='Inspection due TODAY!'; }
+  else if (diff<=7) { banner.className='due-banner show soon'; icon.textContent='⏰'; text.textContent='Due in '+diff+' day'+(diff!==1?'s':'')+' — '+m.due; }
+  else { banner.className='due-banner show ok'; icon.textContent='📅'; text.textContent='Next due: '+m.due+' ('+diff+' days)'; }
 }
+
 function clearAsset() {
-  currentAssetId = '';
-  document.getElementById('asset-banner').style.display = 'none';
-  document.getElementById('due-banner').className = 'due-banner';
-  document.getElementById('waiting-state').style.display = 'block';
-  window.history.replaceState({}, '', window.location.pathname);
+  currentAssetId='';
+  document.getElementById('asset-banner').style.display='none';
+  document.getElementById('due-banner').className='due-banner';
+  document.getElementById('waiting-state').style.display='block';
+  window.history.replaceState({},'',window.location.pathname);
 }
-function manualSet() {
-  const val = document.getElementById('manual-input').value.trim().toUpperCase();
-  if (!val) { showToast('⚠ Enter an Asset ID', true); return; }
-  setAsset(cleanId(val));
-  document.getElementById('manual-input').value = '';
-}
-document.getElementById('manual-input').addEventListener('keydown', e => { if(e.key==='Enter') manualSet(); });
 
-// ── HANDHELD: capture rapid keystrokes from scanner ──
-document.addEventListener('keydown', function(e) {
-  if (currentMode !== 'handheld') return;
+function manualSet() {
+  const val=document.getElementById('manual-input').value.trim().toUpperCase();
+  if (!val) { showToast('⚠ Enter an Asset ID',true); return; }
+  setAsset(cleanId(val));
+  document.getElementById('manual-input').value='';
+}
+document.getElementById('manual-input').addEventListener('keydown',e=>{ if(e.key==='Enter') manualSet(); });
+
+// Handheld
+document.addEventListener('keydown',function(e) {
+  if (currentMode!=='handheld') return;
   if (['script-url','manual-input'].includes(document.activeElement?.id)) return;
-  if (document.activeElement?.tagName === 'SELECT') return;
-  if (e.key === 'Enter') {
-    const val = scanBuffer.trim() || document.getElementById('scan-input').value.trim();
-    if (val.length > 1) setHandheldId(val);
-    scanBuffer = '';
-    return;
-  }
-  if (e.key.length === 1) {
-    scanBuffer += e.key;
-    clearTimeout(scanTimer);
-    scanTimer = setTimeout(() => { scanBuffer = ''; }, 100);
-  }
+  if (document.activeElement?.tagName==='SELECT') return;
+  if (e.key==='Enter') { const val=scanBuffer.trim()||document.getElementById('scan-input').value.trim(); if(val.length>1) setHandheldId(val); scanBuffer=''; return; }
+  if (e.key.length===1) { scanBuffer+=e.key; clearTimeout(scanTimer); scanTimer=setTimeout(()=>{scanBuffer='';},100); }
 });
-document.getElementById('scan-input').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && this.value.trim()) setHandheldId(this.value.trim());
-});
-// Handle paste
-document.getElementById('scan-input').addEventListener('paste', function() {
-  setTimeout(() => { if (this.value.trim().length > 1) setHandheldId(this.value.trim()); }, 50);
-});
-// Handle full URL typed by scanner
-document.getElementById('scan-input').addEventListener('input', function() {
-  const val = this.value.trim();
-  if (val.startsWith('http') && val.includes('?id=')) {
-    setTimeout(() => setHandheldId(val), 100);
-  }
-});
+document.getElementById('scan-input').addEventListener('keydown',function(e){ if(e.key==='Enter'&&this.value.trim()) setHandheldId(this.value.trim()); });
+document.getElementById('scan-input').addEventListener('paste',function(){ setTimeout(()=>{ if(this.value.trim().length>1) setHandheldId(this.value.trim()); },50); });
+document.getElementById('scan-input').addEventListener('input',function(){ const val=this.value.trim(); if(val.startsWith('http')&&val.includes('?id=')) setTimeout(()=>setHandheldId(val),100); });
 
 function setHandheldId(raw) {
-  const id = cleanId(raw);
-  currentAssetId = id;
-  document.getElementById('scan-input').value = id;
+  const id=cleanId(raw);
+  currentAssetId=id;
+  document.getElementById('scan-input').value=id;
   document.getElementById('scan-input').classList.add('flash');
-  setTimeout(() => document.getElementById('scan-input').classList.remove('flash'), 400);
-  document.getElementById('scanned-id-text').textContent = '✓ ' + id;
+  setTimeout(()=>document.getElementById('scan-input').classList.remove('flash'),400);
+  const m=getMachineData(id);
+  document.getElementById('scanned-id-text').textContent='✓ '+id+(m?' — '+m.name:'');
   document.getElementById('scanned-badge').classList.add('show');
-  showToast('🔫 Scanned: ' + id);
-}
-function clearHandheld() {
-  currentAssetId = '';
-  document.getElementById('scan-input').value = '';
-  document.getElementById('scanned-badge').classList.remove('show');
+  showDueDate(id,'due-banner-hand','due-icon-hand','due-text-hand');
+  showToast('🔫 Scanned: '+id);
 }
 
-// ── CONNECT ──
+function clearHandheld() {
+  currentAssetId='';
+  document.getElementById('scan-input').value='';
+  document.getElementById('scanned-badge').classList.remove('show');
+  document.getElementById('due-banner-hand').className='due-banner';
+}
+
 function connect() {
-  const url = document.getElementById('script-url').value.trim();
-  if (!url.startsWith('https://script.google.com')) { showToast('⚠ Invalid URL', true); return; }
-  scriptUrl = url;
-  localStorage.setItem('seatrum_url', url);
-  document.getElementById('dot').className = 'dot on';
-  document.getElementById('conn-text').textContent = 'Connected to Google Sheets ✓';
+  const url=document.getElementById('script-url').value.trim();
+  if (!url.startsWith('https://script.google.com')) { showToast('⚠ Invalid URL',true); return; }
+  scriptUrl=url;
+  localStorage.setItem('seatrum_url',url);
+  document.getElementById('dot').className='dot on';
+  document.getElementById('conn-text').textContent='Connected to Google Sheets ✓';
   document.getElementById('setup-bar').classList.add('hidden');
   showToast('✓ Connected!');
 }
-// Restore saved URL on every page load — including when opened via QR scan
-const saved = localStorage.getItem('seatrum_url');
+const saved=localStorage.getItem('seatrum_url');
 if (saved) {
-  scriptUrl = saved;
-  document.getElementById('script-url').value = saved;
-  document.getElementById('dot').className = 'dot on';
-  document.getElementById('conn-text').textContent = 'Connected to Google Sheets ✓';
+  scriptUrl=saved;
+  document.getElementById('script-url').value=saved;
+  document.getElementById('dot').className='dot on';
+  document.getElementById('conn-text').textContent='Connected to Google Sheets ✓';
   document.getElementById('setup-bar').classList.add('hidden');
 }
 
-// ── STATUS & CHECKLIST ──
 function setStatus(s) {
-  currentStatus = s;
-  document.getElementById('s-pass').className = 's-btn'+(s==='PASS'?' pass':'');
-  document.getElementById('s-flag').className = 's-btn'+(s==='FLAG'?' flag':'');
-  document.getElementById('s-fail').className = 's-btn'+(s==='FAIL'?' fail':'');
+  currentStatus=s;
+  document.getElementById('s-pass').className='s-btn'+(s==='PASS'?' pass':'');
+  document.getElementById('s-flag').className='s-btn'+(s==='FLAG'?' flag':'');
+  document.getElementById('s-fail').className='s-btn'+(s==='FAIL'?' fail':'');
 }
-function tog(el) {
-  el.classList.toggle('checked');
-  el.querySelector('.cl-box').textContent = el.classList.contains('checked')?'✓':'';
-}
+function tog(el) { el.classList.toggle('checked'); el.querySelector('.cl-box').textContent=el.classList.contains('checked')?'✓':''; }
 
-// ── GET DUE DATE FOR SUBMISSION ──
 function getDueDateForId(id) {
-  try {
-    const saved = localStorage.getItem('seatrum_machines');
-    if (!saved) return '';
-    const machines = JSON.parse(saved);
-    const m = machines.find(x => x.id === id);
-    return m && m.due ? m.due : '';
-  } catch(e) { return ''; }
+  const m=getMachineData(id);
+  return m&&m.due?m.due:'';
 }
 
-// ── SUBMIT ──
 async function submitScan() {
-  if (!currentAssetId) { showToast('⚠ Scan a QR code first!', true); return; }
-  const id = cleanId(currentAssetId);
-  const inspector = document.getElementById('inspector').value;
-  const items = document.querySelectorAll('.cl');
-  const checked = [...items].filter(i=>i.classList.contains('checked')).length;
-  const now = new Date();
-  const sg = {timeZone:'Asia/Singapore',hour12:false};
-  const date = now.toLocaleDateString('en-SG',{...sg,day:'2-digit',month:'short',year:'numeric'});
-  const time = now.toLocaleTimeString('en-SG',sg);
-
-  const btn = document.getElementById('btn-submit');
+  if (!currentAssetId) { showToast('⚠ Scan a QR code first!',true); return; }
+  const id=cleanId(currentAssetId);
+  const inspector=document.getElementById('inspector').value;
+  const items=document.querySelectorAll('.cl');
+  const checked=[...items].filter(i=>i.classList.contains('checked')).length;
+  const now=new Date();
+  const sg={timeZone:'Asia/Singapore',hour12:false};
+  const date=now.toLocaleDateString('en-SG',{...sg,day:'2-digit',month:'short',year:'numeric'});
+  const time=now.toLocaleTimeString('en-SG',sg);
+  const btn=document.getElementById('btn-submit');
   btn.disabled=true; btn.textContent='⏳ Sending...'; btn.classList.add('syncing');
-
   if (scriptUrl) {
     try {
-      await fetch(scriptUrl, {
-        method:'POST', mode:'no-cors',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ assetId:id, machineName:'', category:'', date, time, inspector, checklist:`${checked}/${items.length}`, status:currentStatus, dueDate:getDueDateForId(id) })
-      });
+      await fetch(scriptUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({assetId:id,machineName:'',category:'',date,time,inspector,checklist:`${checked}/${items.length}`,status:currentStatus,dueDate:getDueDateForId(id)})});
       showToast('✓ '+id+' saved to Sheets!');
-      addLog(currentStatus.toLowerCase(), id, inspector+' · '+checked+'/'+items.length+' checks', time);
-    } catch(e) { showToast('❌ Sync failed', true); }
-  } else { showToast('⚠ Not connected!', true); }
-
+      addLog(currentStatus.toLowerCase(),id,inspector+' · '+checked+'/'+items.length+' checks',time);
+    } catch(e) { showToast('❌ Sync failed',true); }
+  } else { showToast('⚠ Not connected!',true); }
   btn.disabled=false; btn.textContent='↑ SUBMIT TO GOOGLE SHEETS'; btn.classList.remove('syncing');
   if (currentMode==='phone') clearAsset(); else clearHandheld();
   document.querySelectorAll('.cl').forEach(el=>{ el.classList.add('checked'); el.querySelector('.cl-box').textContent='✓'; });
   setStatus('PASS');
-  if (currentMode==='handheld') setTimeout(()=>document.getElementById('scan-input').focus(), 100);
+  if (currentMode==='handheld') setTimeout(()=>document.getElementById('scan-input').focus(),100);
 }
 
-// ── LOG ──
 function addLog(type,id,meta,time) {
   logCount++; document.getElementById('log-count').textContent=logCount;
   const el=document.createElement('div'); el.className='log-item '+type;
   const b=type!=='info'?`<span class="log-badge ${type}">${type.toUpperCase()}</span>`:'';
   el.innerHTML=`${b}<div class="log-id">${id}</div><div class="log-meta">${meta}</div><div class="log-time">${time}</div>`;
-  document.getElementById('log-list').insertBefore(el, document.getElementById('log-list').firstChild);
+  document.getElementById('log-list').insertBefore(el,document.getElementById('log-list').firstChild);
 }
 
-// ── TOAST ──
 let tt;
 function showToast(msg,err=false) {
   const t=document.getElementById('toast');
