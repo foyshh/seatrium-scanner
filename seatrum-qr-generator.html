@@ -179,6 +179,20 @@ const DEFAULTS = [
 
 let machines = [];
 
+function saveMachines() {
+  localStorage.setItem("seatrum_machines", JSON.stringify(machines));
+}
+
+function loadSavedMachines() {
+  try {
+    const saved = localStorage.getItem("seatrum_machines");
+    if (saved) {
+      const list = JSON.parse(saved);
+      list.forEach(m => addMachine(m));
+    }
+  } catch(e) {}
+}
+
 function getBaseUrl() {
   let url = document.getElementById('base-url').value.trim();
   if (!url.endsWith('/')) url += '/';
@@ -205,6 +219,7 @@ function addMachine(data) {
   if (!m.id||!m.name) { showToast('⚠ Enter Asset ID and Machine Name'); return; }
   if (machines.find(x=>x.id===m.id)) { showToast('⚠ '+m.id+' already exists'); return; }
   machines.push(m);
+  saveMachines();
   updateCount();
   renderCard(m);
   if (!data) {
@@ -263,6 +278,7 @@ function regenAll() {
 function removeMachine(id) {
   document.getElementById('card-'+id)?.remove();
   machines = machines.filter(m=>m.id!==id);
+  saveMachines();
   updateCount();
   if (machines.length===0) {
     document.getElementById('qr-grid').innerHTML=`<div class="empty" id="empty"><span class="empty-icon">📋</span>No machines yet.</div>`;
@@ -278,6 +294,9 @@ function updateCount() {
   const n=machines.length;
   document.getElementById('count').textContent=n+' machine'+(n!==1?'s':'');
 }
+
+// Load saved machines on page load
+loadSavedMachines();
 
 ['in-id','in-name','in-loc'].forEach(id=>{
   document.getElementById(id).addEventListener('keydown',e=>{ if(e.key==='Enter') addMachine(); });
