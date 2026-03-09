@@ -415,6 +415,16 @@ function setStatus(s) {
 }
 function tog(el) { el.classList.toggle('checked'); el.querySelector('.cl-box').textContent=el.classList.contains('checked')?'✓':''; }
 
+function getChecklistDetail() {
+  const items = document.querySelectorAll('.cl');
+  const results = [...items].map(i => {
+    const name = i.querySelector('.cl-text').textContent;
+    const pass = i.classList.contains('checked');
+    return (pass ? '✓' : '✗') + ' ' + name;
+  });
+  return results.join(' | ');
+}
+
 function getDueDateForId(id) {
   const m=getMachineData(id);
   return m&&m.due?m.due:'';
