@@ -108,11 +108,12 @@ body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
 
 .checklist { display:flex; flex-direction:column; gap:7px; margin-bottom:16px; }
 .cl { display:flex; align-items:center; gap:10px; padding:10px 12px; background:#f9f9f9; border:1.5px solid #ececec; border-radius:8px; cursor:pointer; }
+.cl { background:#fff0f0; border-color:#fca5a5; }
 .cl.checked { background:#f0fdf4; border-color:#bbf7d0; }
-.cl-box { width:20px; height:20px; border-radius:5px; border:2px solid #ccc; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:12px; transition:all 0.15s; }
+.cl-box { width:20px; height:20px; border-radius:5px; border:2px solid #fca5a5; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:12px; transition:all 0.15s; color:#dc2626; }
 .cl.checked .cl-box { background:#1a6b3a; border-color:#1a6b3a; color:#fff; }
-.cl-text { font-size:13px; color:#333; }
-.cl.checked .cl-text { color:#aaa; text-decoration:line-through; }
+.cl-text { font-size:13px; color:#dc2626; font-weight:500; }
+.cl.checked .cl-text { color:#aaa; text-decoration:line-through; font-weight:400; }
 
 .btn-submit { width:100%; padding:15px; background:#1a6b3a; color:#fff; border:none; border-radius:11px; font-family:'Space Mono',monospace; font-size:13px; font-weight:700; cursor:pointer; transition:all 0.2s; }
 .btn-submit:active { transform:scale(0.98); }
@@ -433,7 +434,7 @@ async function submitScan() {
   btn.disabled=true; btn.textContent='⏳ Sending...'; btn.classList.add('syncing');
   if (scriptUrl) {
     try {
-      await fetch(scriptUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({assetId:id,machineName:'',category:'',date,time,inspector,checklist:`${checked}/${items.length}`,status:currentStatus,dueDate:getDueDateForId(id)})});
+      await fetch(scriptUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({assetId:id,machineName:'',category:'',date,time,inspector,checklist:getChecklistDetail(),checklistScore:`${checked}/${items.length}`,status:currentStatus,dueDate:getDueDateForId(id)})});
       showToast('✓ '+id+' saved to Sheets!');
       addLog(currentStatus.toLowerCase(),id,inspector+' · '+checked+'/'+items.length+' checks',time);
     } catch(e) { showToast('❌ Sync failed',true); }
