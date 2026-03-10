@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seatrium · iTEST PRO — Admin</title>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyAfRk68ULes8efF9XmGH-jmMQAwTCdG084",
+    authDomain: "seatrium-scanner.firebaseapp.com",
+    databaseURL: "https://seatrium-scanner-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "seatrium-scanner",
+    storageBucket: "seatrium-scanner.firebasestorage.app",
+    messagingSenderId: "45354259398",
+    appId: "1:45354259398:web:17781f783475a4067498c7"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const inspRef = ref(db, 'inspectors');
+  onValue(inspRef, (snapshot) => {
+    window._inspData = snapshot.val() || {};
+    window._renderInspectors && window._renderInspectors();
+  });
+  window._db = db;
+  window._ref = ref;
+  window._set = set;
+  window._remove = remove;
+</script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'DM Sans',sans-serif; background:#f0f4f0; min-height:100vh; }
+
+.header { background:#1a6b3a; padding:14px 24px; display:flex; align-items:center; justify-content:space-between; }
+.logo { font-family:'Space Mono',monospace; font-size:18px; font-weight:700; letter-spacing:0.1em; }
+.logo .brand { color:#4fa3ff; }
+.logo .rest { color:rgba(255,255,255,0.5); font-size:13px; }
+.logo .page { color:#fff; font-size:13px; }
+
+/* LOGIN */
+.login-wrap { display:flex; align-items:center; justify-content:center; min-height:80vh; }
+.login-card { background:#fff; border-radius:16px; padding:36px 32px; width:340px; box-shadow:0 4px 24px rgba(0,0,0,0.1); text-align:center; }
+.login-icon { font-size:40px; margin-bottom:12px; }
+.login-title { font-family:'Space Mono',monospace; font-size:14px; font-weight:700; color:#1a6b3a; margin-bottom:6px; }
+.login-sub { font-size:13px; color:#888; margin-bottom:24px; }
+.login-input { width:100%; padding:12px 14px; border:1.5px solid #e0e0e0; border-radius:8px; font-size:15px; font-family:'Space Mono',monospace; letter-spacing:0.2em; text-align:center; margin-bottom:12px; outline:none; }
+.login-input:focus { border-color:#1a6b3a; }
+.login-btn { width:100%; padding:12px; background:#1a6b3a; color:#fff; border:none; border-radius:8px; font-family:'Space Mono',monospace; font-size:13px; font-weight:700; cursor:pointer; }
+.login-btn:hover { background:#155c2f; }
+.login-error { color:#dc2626; font-size:12px; margin-top:8px; min-height:16px; font-family:'Space Mono',monospace; }
+
+/* ADMIN PANEL */
+.admin-wrap { display:none; max-width:600px; margin:0 auto; padding:24px 16px; }
+.card { background:#fff; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.07); padding:24px; margin-bottom:20px; }
+.section-title { font-family:'Space Mono',monospace; font-size:12px; font-weight:700; color:#1a6b3a; letter-spacing:0.1em; margin-bottom:16px; }
+
+.inspector-list { display:flex; flex-direction:column; gap:8px; margin-bottom:20px; min-height:40px; }
+.insp-row { display:flex; align-items:center; gap:10px; padding:12px 14px; background:#f9f9f9; border-radius:8px; border:1.5px solid #e8f4ed; }
+.insp-name { flex:1; font-weight:600; font-size:14px; color:#1a1814; }
+.insp-pin { font-family:'Space Mono',monospace; font-size:12px; color:#888; background:#f0f0f0; padding:3px 10px; border-radius:6px; letter-spacing:0.2em; }
+.insp-del { background:none; border:1.5px solid #fca5a5; color:#dc2626; cursor:pointer; font-size:12px; padding:5px 10px; border-radius:6px; font-family:'Space Mono',monospace; font-weight:700; }
+.insp-del:hover { background:#fff0f0; }
+.empty-msg { color:#aaa; font-size:13px; text-align:center; padding:12px; }
+
+.add-row { display:flex; gap:8px; flex-wrap:wrap; }
+.add-input { flex:1; min-width:140px; padding:10px 12px; border:1.5px solid #e0e0e0; border-radius:8px; font-size:14px; outline:none; }
+.add-input:focus { border-color:#1a6b3a; }
+.add-pin { width:100px; padding:10px 12px; border:1.5px solid #e0e0e0; border-radius:8px; font-family:'Space Mono',monospace; font-size:14px; letter-spacing:0.2em; outline:none; }
+.add-pin:focus { border-color:#1a6b3a; }
+.add-btn { padding:10px 18px; background:#1a6b3a; color:#fff; border:none; border-radius:8px; font-family:'Space Mono',monospace; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; }
+.add-btn:hover { background:#155c2f; }
+
+.toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#1a1814; color:#fff; padding:10px 20px; border-radius:8px; font-size:13px; font-family:'Space Mono',monospace; opacity:0; transition:opacity 0.3s; pointer-events:none; z-index:999; white-space:nowrap; }
+.toast.show { opacity:1; }
+.toast.err { background:#dc2626; }
+
+.nav-links { display:flex; gap:10px; flex-wrap:wrap; }
+.nav-link { padding:8px 16px; background:rgba(255,255,255,0.15); color:#fff; border-radius:6px; font-family:'Space Mono',monospace; font-size:11px; font-weight:700; text-decoration:none; letter-spacing:0.05em; }
+.nav-link:hover { background:rgba(255,255,255,0.25); }
+
+.logout-btn { padding:8px 16px; background:rgba(255,255,255,0.15); color:#fff; border:none; border-radius:6px; font-family:'Space Mono',monospace; font-size:11px; font-weight:700; cursor:pointer; letter-spacing:0.05em; }
+.logout-btn:hover { background:rgba(220,38,38,0.5); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <span class="brand">Seatrium</span>
+    <span class="rest"> · iTEST PRO · </span>
+    <span class="page">ADMIN</span>
+  </div>
+  <div class="nav-links">
+    <a href="/" class="nav-link">← Scanner</a>
+    <a href="/seatrium-qr-generator.html" class="nav-link">QR Generator</a>
+    <button class="logout-btn" id="logout-btn" style="display:none;" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="login-wrap">
+  <div class="login-card">
+    <div class="login-icon">🔐</div>
+    <div class="login-title">ADMIN ACCESS</div>
+    <div class="login-sub">Enter admin password to continue</div>
+    <input type="password" class="login-input" id="admin-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkLogin()" />
+    <button class="login-btn" onclick="checkLogin()">▶ LOGIN</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="admin-wrap" id="admin-wrap">
+  <div class="card">
+    <div class="section-title">👥 INSPECTOR PIN MANAGEMENT</div>
+    <div class="inspector-list" id="inspector-list">
+      <div class="empty-msg">Loading...</div>
+    </div>
+    <div class="add-row">
+      <input class="add-input" id="insp-name" placeholder="Inspector name" />
+      <input class="add-pin" id="insp-pin" placeholder="PIN" maxlength="4" type="password" />
+      <button class="add-btn" onclick="addInspector()">+ Add</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── ADMIN PASSWORD ──
+const ADMIN_PASSWORD = "seatrium2026"; // Change this to your preferred password
+
+function checkLogin() {
+  const pw = document.getElementById('admin-pw').value;
+  if (pw === ADMIN_PASSWORD) {
+    document.getElementById('login-wrap').style.display = 'none';
+    document.getElementById('admin-wrap').style.display = 'block';
+    document.getElementById('logout-btn').style.display = 'block';
+    sessionStorage.setItem('admin_auth', '1');
+  } else {
+    document.getElementById('login-error').textContent = '✗ Incorrect password';
+    document.getElementById('admin-pw').value = '';
+  }
+}
+
+function logout() {
+  sessionStorage.removeItem('admin_auth');
+  document.getElementById('login-wrap').style.display = 'flex';
+  document.getElementById('admin-wrap').style.display = 'none';
+  document.getElementById('logout-btn').style.display = 'none';
+  document.getElementById('admin-pw').value = '';
+}
+
+// Auto-login if session active
+window.addEventListener('load', () => {
+  if (sessionStorage.getItem('admin_auth') === '1') {
+    document.getElementById('login-wrap').style.display = 'none';
+    document.getElementById('admin-wrap').style.display = 'block';
+    document.getElementById('logout-btn').style.display = 'block';
+  }
+});
+
+// ── INSPECTOR MANAGEMENT ──
+window._inspData = {};
+
+window._renderInspectors = function() {
+  const list = document.getElementById('inspector-list');
+  if (!list) return;
+  const inspectors = Object.values(window._inspData);
+  if (inspectors.length === 0) {
+    list.innerHTML = '<div class="empty-msg">No inspectors added yet.</div>';
+    return;
+  }
+  list.innerHTML = inspectors.map(i => `
+    <div class="insp-row">
+      <span class="insp-name">${i.name}</span>
+      <span class="insp-pin">PIN: ****</span>
+      <button class="insp-del" onclick="deleteInspector('${i.id}', '${i.name}')">✕ Remove</button>
+    </div>
+  `).join('');
+};
+
+function addInspector() {
+  const name = document.getElementById('insp-name').value.trim();
+  const pin = document.getElementById('insp-pin').value.trim();
+  if (!name) { showToast('⚠ Enter inspector name', true); return; }
+  if (!/^[0-9]{4}$/.test(pin)) { showToast('⚠ PIN must be exactly 4 digits', true); return; }
+  const existing = Object.values(window._inspData);
+  if (existing.find(i => String(i.pin) === pin)) { showToast('⚠ PIN already in use', true); return; }
+  if (existing.find(i => i.name.toLowerCase() === name.toLowerCase())) { showToast('⚠ Inspector name already exists', true); return; }
+  if (!window._set || !window._db) { showToast('⚠ Firebase not ready', true); return; }
+  const id = 'insp_' + Date.now();
+  window._set(window._ref(window._db, 'inspectors/' + id), { id, name, pin })
+    .then(() => {
+      showToast('✓ ' + name + ' added');
+      document.getElementById('insp-name').value = '';
+      document.getElementById('insp-pin').value = '';
+      document.getElementById('insp-name').focus();
+    })
+    .catch(e => showToast('⚠ Error: ' + e.message, true));
+}
+
+function deleteInspector(id, name) {
+  if (!confirm('Remove ' + name + '?')) return;
+  window._remove(window._ref(window._db, 'inspectors/' + id))
+    .then(() => showToast('✓ ' + name + ' removed'))
+    .catch(e => showToast('⚠ Error: ' + e.message, true));
+}
+
+function showToast(msg, err=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (err ? ' err' : '');
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+// Enter key on PIN input
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('insp-pin')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') addInspector();
+  });
+});
+</script>
+</body>
+</html>
