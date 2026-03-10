@@ -456,8 +456,7 @@ async function submitScan() {
   if (scriptUrl) {
     try {
       const machineData = getMachineData(id);
-      const formData = new URLSearchParams();
-      formData.append('data', JSON.stringify({
+      const payload = JSON.stringify({
         assetId:id,
         machineName:machineData?machineData.name:'',
         category:machineData?machineData.cat:'',
@@ -466,8 +465,8 @@ async function submitScan() {
         checklistScore:`${checked}/${items.length}`,
         status:currentStatus,
         dueDate:getDueDateForId(id)
-      }));
-      await fetch(scriptUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:formData});
+      });
+      await fetch(scriptUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:payload});
       showToast('✓ '+id+' saved to Sheets!');
       addLog(currentStatus.toLowerCase(),id,inspector+' · '+checked+'/'+items.length+' checks',time);
     } catch(e) { showToast('❌ Sync failed: '+e.message,true); }
