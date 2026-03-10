@@ -434,18 +434,38 @@ function getMachineData(id) {
 window.addEventListener('load',function() {
   const params=new URLSearchParams(window.location.search);
   const raw=params.get('id');
-  if (raw) { const id=cleanId(raw); setAsset(id); showToast('📷 Loaded: '+id); }
+  if (raw) {
+    const id=cleanId(raw);
+    setAsset(id);
+    showToast('📷 Loaded: '+id);
+    // Keep retrying to fill machine name once Firebase is ready
+    let tries=0;
+    const interval=setInterval(()=>{
+      tries++;
+      const m=getMachineData(id);
+      if (m) {
+        document.getElementById('banner-name').textContent=m.name+(m.loc?' · 📍'+m.loc:'');
+        showDueDate(id,'due-banner','due-icon','due-text');
+        clearInterval(interval);
+      }
+      if (tries>10) clearInterval(interval);
+    },500);
+  }
 });
 
 function setAsset(id) {
   currentAssetId=id;
   document.getElementById('banner-id').textContent=id;
-  // Show machine name if available from Firebase
-  const m = getMachineData(id);
-  document.getElementById('banner-name').textContent = m ? m.name+' · 📍'+m.loc : '';
   document.getElementById('asset-banner').style.display='block';
   document.getElementById('waiting-state').style.display='none';
-  showDueDate(id,'due-banner','due-icon','due-text');
+  // Try immediately, then retry after Firebase loads
+  function tryFill() {
+    const m = getMachineData(id);
+    document.getElementById('banner-name').textContent = m ? m.name+(m.loc?' · 📍'+m.loc:'') : '';
+    showDueDate(id,'due-banner','due-icon','due-text');
+  }
+  tryFill();
+  setTimeout(tryFill, 1500); // retry after Firebase ready
 }
 
 function showDueDate(id, bannerId, iconId, textId) {
@@ -623,6 +643,11 @@ async function submitScan() {
     }
   } else { showToast('⚠ Not connected!',true); }
   btn.disabled=false; btn.textContent='↑ SUBMIT TO GOOGLE SHEETS'; btn.classList.remove('syncing');
+  // Reset inspector for next scan
+  document.getElementById('inspector').value='';
+  document.getElementById('inspector-name-display').textContent='🔐 Tap to verify identity';
+  document.getElementById('inspector-name-display').style.color='#888';
+  document.getElementById('inspector-name-display').style.fontWeight='400';
   if (currentMode==='phone') clearAsset(); else clearHandheld();
   document.querySelectorAll('.cl').forEach(el=>{ el.classList.add('checked'); el.querySelector('.cl-box').textContent='✓'; });
   updateScore();
